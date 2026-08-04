@@ -12,6 +12,14 @@ function copyPackageJson({ piecePath, distPath }: PieceDistPaths): void {
     copyFileSync(srcPackageJson, join(distPath, 'package.json'))
 }
 
+function copyReadme({ piecePath, distPath }: PieceDistPaths): void {
+    const srcReadme = join(piecePath, 'README.md')
+    if (!existsSync(srcReadme)) {
+        return
+    }
+    copyFileSync(srcReadme, join(distPath, 'README.md'))
+}
+
 function copyI18nAssets({ piecePath, distPath }: PieceDistPaths): void {
     const i18nSrc = join(piecePath, 'src', 'i18n')
     if (!existsSync(i18nSrc)) {
@@ -37,6 +45,7 @@ async function preparePieceDistForPublish(piecePath: string): Promise<void> {
     const repoRoot = findRepoRoot(piecePath)
     const paths = { piecePath, distPath }
     copyPackageJson(paths)
+    copyReadme(paths)
     copyI18nAssets(paths)
 
     const { bundleBytes, rawBytes, external } = await bundlePieceUtils.bundlePiece({ ...paths, repoRoot })
@@ -126,12 +135,13 @@ function safeReaddir(dir: string): string[] {
 
 // After bundling, dist/ still holds the full tsc output (compiled lib/*, .d.ts, .map). Prune it
 // down to EXACTLY what npm would publish — the manifest's `files` allow-list (the self-contained
-// bundle + i18n) plus package.json — so `dist/` mirrors the published artifact 1:1.
+// bundle + i18n) plus the files npm always includes regardless of that list (package.json,
+// README.md) — so `dist/` mirrors the published artifact 1:1.
 function pruneDistToPublishedFiles({ distPath }: { distPath: string }): void {
     const json = JSON.parse(readFileSync(join(distPath, 'package.json'), 'utf-8'))
     const entries: string[] = json.files ?? []
 
-    const keepFiles = new Set<string>(['package.json'])
+    const keepFiles = new Set<string>(['package.json', 'README.md'])
     const keepDirs: string[] = []
     for (const entry of entries) {
         const normalized = entry.replace(/\/$/, '')

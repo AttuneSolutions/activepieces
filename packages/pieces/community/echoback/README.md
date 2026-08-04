@@ -1,8 +1,35 @@
-# Echoback piece
+# @attunesolutions/piece-echoback
 
-Submits voicemail audio to a self-hosted
-[echoback](https://github.com/AttuneSolutions/echoback) transcription service, pauses the
-flow while whisper.cpp works, and resumes with the transcript.
+An [Activepieces](https://www.activepieces.com) piece that submits voicemail audio to a
+self-hosted [echoback](https://github.com/AttuneSolutions/echoback) transcription service,
+pauses the flow while whisper.cpp works, and resumes it with the transcript.
+
+Transcription is asynchronous: echoback accepts the audio, returns a job id, and calls back
+when the text is ready. The flow run is suspended in between, so it holds no worker.
+
+## Install
+
+Self-hosted Activepieces, as a custom piece:
+
+```bash
+npm install @attunesolutions/piece-echoback
+```
+
+Or install it from the Activepieces admin UI (**Platform Admin → Pieces → Install piece**)
+by npm package name:
+
+```
+@attunesolutions/piece-echoback
+```
+
+Requires Activepieces `0.36.1` or later, and a reachable echoback instance.
+
+## Connection
+
+| Field | Description |
+| --- | --- |
+| Base URL | echoback's public URL, e.g. `https://echoback.example.com` |
+| API token | bearer token echoback accepts on `POST /jobs` and `GET /jobs/{id}` |
 
 ## Action
 
@@ -50,3 +77,7 @@ Activepieces host, `WEBHOOK_ATTEMPTS=8`.
   also knows a valid job B can resume A's flow with `job_id: B` and get B's transcript.
   Resume query params come from the request, so there is no trustworthy way to pin the
   submitted job id across the pause.
+
+## License
+
+MIT
