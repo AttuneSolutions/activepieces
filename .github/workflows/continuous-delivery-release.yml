@@ -7,6 +7,7 @@ on:
 
 jobs:
   weekly-release:
+    if: github.repository == 'activepieces/activepieces'
     runs-on: ubuntu-24.04
     environment:
       name: release

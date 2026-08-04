@@ -8,6 +8,7 @@ on:
 jobs:
   sync:
     name: Update BetterStack Playwright monitor
+    if: github.repository == 'activepieces/activepieces'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
