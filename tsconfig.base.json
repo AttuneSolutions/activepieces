@@ -1520,6 +1520,9 @@
         "packages/pieces/community/xquik/src/index.ts"
       ],
       "@activepieces/piece-xml": ["packages/pieces/core/xml/src/index.ts"],
+      "@attunesolutions/piece-yoke": [
+        "packages/pieces/community/yoke/src/index.ts"
+      ],
       "@activepieces/piece-youtube": [
         "packages/pieces/community/youtube/src/index.ts"
       ],
