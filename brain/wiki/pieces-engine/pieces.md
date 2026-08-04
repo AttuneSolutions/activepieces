@@ -29,6 +29,7 @@ The metadata catalog of automation integrations ("pieces") — each a named inte
 - Install and sync also enqueue a tool-search reindex, but only when `isToolSearchEnabled()`; no-op otherwise.
 - `delete` removes all versions sharing the name on that platform, and only for `CUSTOM` pieces the caller owns.
 - `npm run build-piece <name>` prunes `dist/` down to the manifest `files` allow-list (`pruneDistToPublishedFiles` in `packages/cli/src/lib/utils/prepare-piece-utils.ts`), which is rewritten to `[bundle, package.json, src/i18n]` — anything else in the piece folder is deleted before `npm pack`. `README.md` is copied in and kept explicitly; without that a piece published to npm shows an empty package page, because the allow-list wins over npm's "always include the README" behaviour when the file simply isn't there.
+- `npm pack --json` changed output shape in **npm 12**: an array of results up to npm 11, a map keyed by package name from npm 12 on. `buildPiece` (`packages/cli/src/lib/utils/piece-utils.ts`) reads the tarball name through `readPackedTarballName`, which accepts both. Publish workflows that run `npm install -g npm@latest` pick the new npm up silently, so this fails in CI while a local build on the repo's older npm still passes.
 
 ### Key files
 Entry point: `pieceModule`, the Fastify plugin registered in `packages/server/api/src/app/app.ts` that mounts every `/v1/pieces` route.
