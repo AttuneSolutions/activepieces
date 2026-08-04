@@ -58,7 +58,7 @@ export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: s
     await preparePieceDistForPublish(pieceFolder);
 
     const { stdout } = await exec('npm pack --json', { cwd: compiledPath });
-    const tarFileName = JSON.parse(stdout)[0].filename;
+    const tarFileName = readPackedTarballName(stdout);
     return {
         outputFolder: compiledPath,
         outputFile: path.join(compiledPath, tarFileName)
@@ -176,4 +176,14 @@ export const assertPieceExists = async (pieceName: string | null) => {
   export const removeStartingSlashes = (str: string) => {
     return str.startsWith('/') ? str.slice(1) : str;
   }
+
+export function readPackedTarballName(stdout: string): string {
+    const parsed = JSON.parse(stdout);
+    const results = Array.isArray(parsed) ? parsed : Object.values(parsed);
+    const filename = results[0]?.filename;
+    if (typeof filename !== 'string') {
+        throw new Error(`Could not read the tarball name from \`npm pack --json\` output: ${stdout}`);
+    }
+    return filename;
+}
 
