@@ -433,6 +433,9 @@
       "@activepieces/piece-dumpling-ai": [
         "packages/pieces/community/dumpling-ai/src/index.ts"
       ],
+      "@attunesolutions/piece-echoback": [
+        "packages/pieces/community/echoback/src/index.ts"
+      ],
       "@activepieces/piece-eden-ai": [
         "packages/pieces/community/eden-ai/src/index.ts"
       ],
