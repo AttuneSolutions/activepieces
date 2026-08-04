@@ -1,9 +1,9 @@
 {
   "name": "@attunesolutions/piece-yoke",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Activepieces piece for Yoke — read instruction documents and gate flows on human approval.",
   "license": "MIT",
-  "homepage": "https://app.yokecontrol.ai",
+  "homepage": "https://www.yokecontrol.ai",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AttuneSolutions/activepieces.git",
