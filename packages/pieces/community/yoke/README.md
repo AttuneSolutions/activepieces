@@ -1,6 +1,6 @@
 # @attunesolutions/piece-yoke
 
-An [Activepieces](https://www.activepieces.com) piece for [Yoke](https://app.yokecontrol.ai).
+An [Activepieces](https://www.activepieces.com) piece for [Yoke](https://www.yokecontrol.ai).
 It reads instruction documents out of Yoke and gates a flow on a human decision made in Yoke's
 approval queues.
 
