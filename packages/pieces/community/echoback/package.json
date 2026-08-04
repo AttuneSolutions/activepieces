@@ -1,6 +1,21 @@
 {
   "name": "@attunesolutions/piece-echoback",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "description": "Activepieces piece for the self-hosted echoback transcription service.",
+  "license": "MIT",
+  "homepage": "https://github.com/AttuneSolutions/echoback",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AttuneSolutions/activepieces.git",
+    "directory": "packages/pieces/community/echoback"
+  },
+  "keywords": [
+    "activepieces",
+    "activepieces-piece",
+    "transcription",
+    "whisper",
+    "voicemail"
+  ],
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
