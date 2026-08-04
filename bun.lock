@@ -2841,6 +2841,19 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/echoback": {
+      "name": "@attunesolutions/piece-echoback",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "form-data": "4.0.6",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/echowin": {
       "name": "@activepieces/piece-echowin",
       "version": "0.1.6",
@@ -12641,6 +12654,8 @@
     "@atproto/syntax": ["@atproto/syntax@0.4.3", "", { "dependencies": { "tslib": "^2.8.1" } }, "sha512-YoZUz40YAJr5nPwvCDWgodEOlt5IftZqPJvA0JDWjuZKD8yXddTwSzXSaKQAzGOpuM+/A3uXRtPzJJqlScc+iA=="],
 
     "@atproto/xrpc": ["@atproto/xrpc@0.7.7", "", { "dependencies": { "@atproto/lexicon": "^0.6.0", "zod": "^3.23.8" } }, "sha512-K1ZyO/BU8JNtXX5dmPp7b5UrkLMMqpsIa/Lrj5D3Su+j1Xwq1m6QJ2XJ1AgjEjkI1v4Muzm7klianLE6XGxtmA=="],
+
+    "@attunesolutions/piece-echoback": ["@attunesolutions/piece-echoback@workspace:packages/pieces/community/echoback"],
 
     "@authenio/samlify-node-xmllint": ["@authenio/samlify-node-xmllint@2.0.0", "", { "dependencies": { "node-xmllint": "^1.0.0" }, "peerDependencies": { "samlify": ">= 2.6.0" } }, "sha512-V9cQ0CHqu3JwOmbSecGPUnzIES5kHxD00FEZKnWh90ksQUJG5/TscV2r9XLbKp7MlRMOSUfWxecM35xPSLFdSg=="],
 

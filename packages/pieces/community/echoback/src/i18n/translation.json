@@ -1,0 +1,17 @@
+{
+  "Transcribe voicemail audio with a self-hosted echoback service.": "Transcribe voicemail audio with a self-hosted echoback service.",
+  "Transcribe Voicemail and Wait": "Transcribe Voicemail and Wait",
+  "Submit audio to echoback, pause until transcribed, return the transcript.": "Submit audio to echoback, pause until transcribed, return the transcript.",
+  "Audio": "Audio",
+  "Voicemail audio in any codec ffmpeg decodes. Max 25 MB by default.": "Voicemail audio in any codec ffmpeg decodes. Max 25 MB by default.",
+  "Correlation Ref": "Correlation Ref",
+  "Echoed back verbatim. Max 256 characters, no control characters.": "Echoed back verbatim. Max 256 characters, no control characters.",
+  "Model Override": "Model Override",
+  "Must be in the server's allowlist, e.g. tiny, base, small, medium or their .en variants. Leave empty for the server default.": "Must be in the server's allowlist, e.g. tiny, base, small, medium or their .en variants. Leave empty for the server default.",
+  "Vocabulary Hint": "Vocabulary Hint",
+  "Domain terms and expected proper nouns to bias decoding. Max 1000 characters.": "Domain terms and expected proper nouns to bias decoding. Max 1000 characters.",
+  "Base URL": "Base URL",
+  "e.g. https://voicemail.example.com — no trailing slash.": "e.g. https://voicemail.example.com — no trailing slash.",
+  "API Token": "API Token",
+  "Bearer token echoback expects on every endpoint except /health.": "Bearer token echoback expects on every endpoint except /health."
+}
