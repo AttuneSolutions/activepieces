@@ -2,7 +2,7 @@
 
 An [Activepieces](https://www.activepieces.com) piece for [Yoke](https://www.yokecontrol.ai).
 It reads instruction documents out of Yoke and gates a flow on a human decision made in Yoke's
-approval queues.
+request queues.
 
 ## Install
 
@@ -49,7 +49,7 @@ served verbatim; can be an empty string for placeholder docs). The list action o
 rows from **List Instructions** carry `body: null`. Yoke no longer returns HTML — render the
 Markdown downstream if you need it.
 
-**Request Approval in Yoke** — creates a request in a Yoke approval queue, pauses the run, and
+**Request Approval in Yoke** — creates a request in a Yoke request queue, pauses the run, and
 resumes with the decision:
 
 | Type | Yoke renders | Resume yields |
@@ -58,7 +58,7 @@ resumes with the decision:
 | Approval with Note | the same plus a text box | `approved` + `feedback` |
 | Input | text box only | `approved: null`, `feedback` |
 
-Resume output is `{ approved, action, feedback, approvalId, approvalQueue }`. `approved` is
+Resume output is `{ approved, action, feedback, approvalId, requestQueue }`. `approved` is
 `true` for `approve`, `false` for `reject` or `disapprove` (the latter is what Activepieces' own
 confirmation page posts), and `null` for input submissions.
 

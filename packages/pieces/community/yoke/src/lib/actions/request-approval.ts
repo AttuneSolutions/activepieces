@@ -20,11 +20,11 @@ export const requestApproval = createAction({
   name: 'request_approval',
   displayName: 'Request Approval in Yoke',
   description:
-    'Send a request to a Yoke approval queue and then wait until someone responds.',
+    'Send a request to a Yoke request queue and then wait until someone responds.',
   audience: 'both',
   aiMetadata: {
     description:
-      'Creates a request in Yoke assigned to an approval queue, then pauses the flow until a member responds, resuming with the decision and any text they left. Type "approval" is a yes/no gate, "approval_with_note" adds an optional note, "input" collects free text with no yes/no. Use as a human-in-the-loop gate before a sensitive downstream step. Not idempotent: each run may create a new Yoke request (deduped only when an Approval ID is supplied and the prior one is still pending).',
+      'Creates a request in Yoke assigned to a request queue, then pauses the flow until a member responds, resuming with the decision and any text they left. Type "approval" is a yes/no gate, "approval_with_note" adds an optional note, "input" collects free text with no yes/no. Use as a human-in-the-loop gate before a sensitive downstream step. Not idempotent: each run may create a new Yoke request (deduped only when an Approval ID is supplied and the prior one is still pending).',
     idempotent: false,
   },
   props: {
@@ -48,7 +48,7 @@ export const requestApproval = createAction({
       description: 'Headline shown in Yoke.',
       required: true,
     }),
-    approvalQueue: yokeCommon.approvalQueueDropdown,
+    requestQueue: yokeCommon.requestQueueDropdown,
     message: Property.LongText({
       displayName: 'Message',
       description: 'Request details in Markdown. Yoke renders this.',
@@ -84,7 +84,7 @@ export const requestApproval = createAction({
       const {
         type,
         title,
-        approvalQueue,
+        requestQueue,
         message,
         approveButtonText,
         rejectButtonText,
@@ -131,7 +131,7 @@ export const requestApproval = createAction({
           request_type: type,
           title,
           message_markdown: message,
-          request_queue_id: approvalQueue,
+          request_queue_id: requestQueue,
           ...(pausedFlowTimeoutDays !== null
             ? { paused_flow_timeout_days: pausedFlowTimeoutDays }
             : {}),
@@ -146,7 +146,7 @@ export const requestApproval = createAction({
         action: null,
         feedback: null,
         approvalId: key,
-        approvalQueue,
+        requestQueue,
         yokeRequestId: response.body.request.id,
       };
     }
@@ -161,7 +161,7 @@ export const requestApproval = createAction({
         runId: context.run.id,
         stepName: context.step.name,
       }),
-      approvalQueue: context.propsValue.approvalQueue,
+      requestQueue: context.propsValue.requestQueue,
     };
   },
 });
