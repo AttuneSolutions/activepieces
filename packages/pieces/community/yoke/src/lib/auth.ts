@@ -21,5 +21,5 @@ export const yokeAuth = PieceAuth.OAuth2({
   grantType: OAuth2GrantType.CLIENT_CREDENTIALS,
   authUrl: '',
   tokenUrl: `${YOKE_BASE_URL}/oauth/token`,
-  scope: ['instructions_read', 'approval_queues_read', 'requests_write'],
+  scope: ['instructions_read', 'request_queues_read', 'requests_write'],
 });
