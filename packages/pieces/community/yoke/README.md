@@ -31,7 +31,7 @@ OAuth2 client credentials, issued per Yoke integration:
 3. **Generate credentials** — Yoke shows a one-time **Client ID** and **Client Secret**.
 4. Paste both into the connection.
 
-Scopes requested: `instructions_read`, `approval_queues_read`, `requests_write`. Tokens are
+Scopes requested: `instructions_read`, `request_queues_read`, `requests_write`. Tokens are
 scoped to the Yoke account behind the integration, so no tenant id is needed.
 
 Self-hosters pointing at a non-default Yoke deployment can set `YOKE_BASE_URL` on the worker;
