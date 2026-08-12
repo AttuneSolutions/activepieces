@@ -13,7 +13,7 @@ export const getInstruction = createAction({
   name: 'get_instruction',
   displayName: 'Get Instruction',
   description:
-    'Fetches a single Yoke instruction document by ID, including its full Markdown and HTML content.',
+    'Fetches a single Yoke instruction document by ID, including its full Markdown body.',
   props: {
     instructionId: yokeCommon.instructionDropdown,
   },

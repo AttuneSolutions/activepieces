@@ -10,13 +10,27 @@ describe('flattenInstruction', () => {
       owner: { id: 3, name: 'Ada', email: 'ada@example.com' },
       created_at: '2026-01-01T00:00:00Z',
       updated_at: '2026-01-02T00:00:00Z',
-      content_markdown: '# Refunds',
+      body: '# Refunds',
     });
 
     expect(flat.tags).toBe('policy, finance');
     expect(flat.owner_id).toBe(3);
     expect(flat.owner_email).toBe('ada@example.com');
-    expect(flat.content_html).toBeNull();
+    expect(flat.body).toBe('# Refunds');
+  });
+
+  it('keeps an empty body as an empty string', () => {
+    const flat = flattenInstruction({
+      id: 9,
+      title: 'Placeholder',
+      tags: [],
+      owner: null,
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+      body: '',
+    });
+
+    expect(flat.body).toBe('');
   });
 
   it('nulls owner fields when the document has no owner', () => {
@@ -32,7 +46,7 @@ describe('flattenInstruction', () => {
     expect(flat.tags).toBe('');
     expect(flat.owner_id).toBeNull();
     expect(flat.owner_name).toBeNull();
-    expect(flat.content_markdown).toBeNull();
+    expect(flat.body).toBeNull();
   });
 });
 

@@ -44,8 +44,10 @@ filter. Returns `{ rows, total, page, per_page, pages }`, each row flattened (ta
 string, owner lifted to `owner_id` / `owner_name` / `owner_email`). **Fetch All Pages** walks
 every page and returns one combined result.
 
-**Get Instruction** — fetches one document by id from a dropdown, including `content_markdown`
-and `content_html`.
+**Get Instruction** — fetches one document by id from a dropdown, including `body` (raw Markdown,
+served verbatim; can be an empty string for placeholder docs). The list action omits `body`, so
+rows from **List Instructions** carry `body: null`. Yoke no longer returns HTML — render the
+Markdown downstream if you need it.
 
 **Request Approval in Yoke** — creates a request in a Yoke approval queue, pauses the run, and
 resumes with the decision:
