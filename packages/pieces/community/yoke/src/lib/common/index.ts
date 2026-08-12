@@ -228,7 +228,7 @@ export type YokeRequestResponse = {
     request_type: string;
     status: string;
     title: string;
-    approval_queue_id: number;
+    request_queue_id: number;
     url: string;
     created_at: string;
     resolved_at: string | null;
