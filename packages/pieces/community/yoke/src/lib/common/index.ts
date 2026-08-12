@@ -48,8 +48,7 @@ export function flattenInstruction(
     owner_email: doc.owner?.email ?? null,
     created_at: doc.created_at,
     updated_at: doc.updated_at,
-    content_markdown: doc.content_markdown ?? null,
-    content_html: doc.content_html ?? null,
+    body: doc.body ?? null,
   };
 }
 
@@ -187,8 +186,7 @@ export type YokeInstructionDocument = {
   owner: { id: number; name: string; email: string } | null;
   created_at: string;
   updated_at: string;
-  content_markdown?: string;
-  content_html?: string;
+  body?: string;
 };
 
 export type YokeInstructionListResponse = {
@@ -250,6 +248,5 @@ export type FlatYokeInstruction = {
   owner_email: string | null;
   created_at: string;
   updated_at: string;
-  content_markdown: string | null;
-  content_html: string | null;
+  body: string | null;
 };

@@ -14,7 +14,7 @@
   "Fetch All Pages": "Fetch All Pages",
   "If enabled, fetches every page and returns all matching instructions in a single result.": "If enabled, fetches every page and returns all matching instructions in a single result.",
   "Get Instruction": "Get Instruction",
-  "Fetches a single Yoke instruction document by ID, including its full Markdown and HTML content.": "Fetches a single Yoke instruction document by ID, including its full Markdown and HTML content.",
+  "Fetches a single Yoke instruction document by ID, including its full Markdown body.": "Fetches a single Yoke instruction document by ID, including its full Markdown body.",
   "Instruction": "Instruction",
   "Pick the instruction document to fetch.": "Pick the instruction document to fetch.",
   "Request Approval in Yoke": "Request Approval in Yoke",
