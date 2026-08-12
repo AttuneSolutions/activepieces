@@ -16,7 +16,7 @@ export const yoke = createPiece({
   description:
     'Read instruction documents from Yoke and gate flows on human approval.',
   auth: yokeAuth,
-  minimumSupportedRelease: '0.86.3',
+  minimumSupportedRelease: '0.85.2',
   logoUrl: 'https://www.yokecontrol.ai/piece-yoke.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: ['sgsimpson'],
