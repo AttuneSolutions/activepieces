@@ -53,9 +53,9 @@ export function flattenInstruction(
 }
 
 export const yokeCommon = {
-  approvalQueueDropdown: Property.Dropdown({
-    displayName: 'Approval Queue',
-    description: 'Yoke approval queue to assign this approval to.',
+  requestQueueDropdown: Property.Dropdown({
+    displayName: 'Request Queue',
+    description: 'Yoke request queue to assign this request to.',
     auth: yokeAuth,
     refreshers: [],
     required: true,
@@ -78,7 +78,7 @@ export const yokeCommon = {
           return {
             disabled: false,
             options: [],
-            placeholder: 'No approval queues found in Yoke.',
+            placeholder: 'No request queues found in Yoke.',
           };
         }
         return {
@@ -92,7 +92,7 @@ export const yokeCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Failed to load approval queues. Check your Yoke connection.',
+          placeholder: 'Failed to load request queues. Check your Yoke connection.',
         };
       }
     },
