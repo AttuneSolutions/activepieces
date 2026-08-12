@@ -68,13 +68,13 @@ export const yokeCommon = {
         };
       }
       try {
-        const response = await yokeApiCall<YokeApprovalQueueListResponse>({
+        const response = await yokeApiCall<YokeRequestQueueListResponse>({
           accessToken: (auth as OAuth2PropertyValue).access_token,
           method: HttpMethod.GET,
-          path: '/approval_queues',
+          path: '/request_queues',
           queryParams: { per_page: '100', active: 'true' },
         });
-        if (response.body.approval_queues.length === 0) {
+        if (response.body.request_queues.length === 0) {
           return {
             disabled: false,
             options: [],
@@ -83,7 +83,7 @@ export const yokeCommon = {
         }
         return {
           disabled: false,
-          options: response.body.approval_queues.map((queue) => ({
+          options: response.body.request_queues.map((queue) => ({
             label: queue.title,
             value: queue.id,
           })),
@@ -203,20 +203,16 @@ export type YokeInstructionShowResponse = {
   document: YokeInstructionDocument;
 };
 
-export type YokeApprovalQueue = {
+export type YokeRequestQueue = {
   id: number;
   title: string;
-  description: string | null;
   approvals_required: number;
   rerun_behavior: string;
-  retention_days: number;
   active: boolean;
-  created_at: string;
-  updated_at: string;
 };
 
-export type YokeApprovalQueueListResponse = {
-  approval_queues: YokeApprovalQueue[];
+export type YokeRequestQueueListResponse = {
+  request_queues: YokeRequestQueue[];
   pagination: {
     page: number;
     per_page: number;
