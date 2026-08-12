@@ -76,13 +76,17 @@ bearer token applied.
 | --- | --- |
 | `AP_FRONTEND_URL` | must be the externally reachable URL of the instance; the resume URLs handed to Yoke are built from it. |
 | `AP_WORKER_CONCURRENCY` | a paused approval releases its worker, but the flow still occupies a run slot; keep concurrency above 1 on busy instances. |
-| `AP_PAUSED_FLOW_TIMEOUT_DAYS` | how long an unanswered approval stays resumable. |
+| `AP_PAUSED_FLOW_TIMEOUT_DAYS` | how long an unanswered approval stays resumable. Yoke treats an omitted or non-positive `paused_flow_timeout_days` as "use my default", so a missing flag is never an error. |
+| Yoke integration `callback_host` allow-list | must contain the host of `AP_FRONTEND_URL`. Yoke validates `approve_url` / `reject_url` / `response_url` against it and rejects a mismatch with `422 callback_host_not_allowed` — the usual symptom of a self-hosted instance Yoke has not been told about. |
 
 ## Known limitations
 
 - **Loop On Items is unsupported.** Waitpoints are keyed on `(flowRunId, stepName)`, so a second
   iteration of the same approval step in one run can collide with the first. Use one run (or a
   sub-flow) per approval.
+- **A `404 not_found` / "Request queue not found." from the approval action is a body problem, not a
+  route problem.** Yoke's strong params silently drop an unknown key, so a stale field name leaves
+  `request_queue_id` nil and the queue lookup 404s. Check the request body before the URL.
 - **Not idempotent across reruns** unless you supply an **Approval ID**. Left empty, the key is
   derived per run (`runId:stepName`), so a rerun creates a new Yoke request.
 - **Deduplication is Yoke's.** A repeated `idempotency_key` only collapses while the earlier

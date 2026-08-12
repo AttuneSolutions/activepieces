@@ -131,7 +131,7 @@ export const requestApproval = createAction({
           request_type: type,
           title,
           message_markdown: message,
-          approval_queue_id: approvalQueue,
+          request_queue_id: approvalQueue,
           ...(pausedFlowTimeoutDays !== null
             ? { paused_flow_timeout_days: pausedFlowTimeoutDays }
             : {}),
