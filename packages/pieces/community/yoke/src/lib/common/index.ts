@@ -52,6 +52,72 @@ export function flattenInstruction(
   };
 }
 
+// Nested objects become flat inbox_* fields, in the shape flattenInstruction
+// already sets, because Activepieces' mapping UI offers flat keys. attachments
+// stays an array (a flow loops it) and headers stays an object (thirteen fixed
+// keys, and flattening them would invent header_content_type and friends).
+//
+// includeHtml: false DROPS the key rather than sending null, so the mapping UI
+// does not offer a field that is always empty.
+export function flattenReceivedEmail(
+  email: YokeReceivedEmail,
+  { includeHtml }: { includeHtml: boolean },
+): FlatYokeReceivedEmail {
+  const flat: FlatYokeReceivedEmail = {
+    id: email.id,
+    message_id: email.message_id,
+    from: email.from,
+    subject: email.subject,
+    received_at: email.received_at,
+    recorded_at: email.recorded_at,
+    has_attachments: email.has_attachments,
+    attachment_count: email.attachment_count,
+    content_available_until: email.content_available_until ?? null,
+    inbox_token: email.inbox?.token ?? null,
+    inbox_label: email.inbox?.label ?? null,
+    inbox_address: email.inbox?.address ?? null,
+    inbox_discarded: email.inbox?.discarded ?? null,
+    text_body: email.text_body ?? null,
+    headers: email.headers ?? {},
+    attachments: email.attachments ?? [],
+    attachments_truncated: email.attachments_truncated ?? false,
+  };
+
+  if (includeHtml) {
+    flat.html_body = email.html_body ?? null;
+  }
+
+  return flat;
+}
+
+// The index rows carry three keys the show response does not, and none of the
+// content keys. Kept separate so a flow mapping a search result is not offered
+// text_body fields that will never be populated.
+export function flattenReceivedEmailRow(
+  row: YokeReceivedEmailRow,
+): FlatYokeReceivedEmailRow {
+  return {
+    id: row.id,
+    message_id: row.message_id,
+    from: row.from,
+    subject: row.subject,
+    received_at: row.received_at,
+    recorded_at: row.recorded_at,
+    has_attachments: row.has_attachments,
+    attachment_count: row.attachment_count,
+    content_available_until: row.content_available_until ?? null,
+    inbox_token: row.inbox?.token ?? null,
+    inbox_label: row.inbox?.label ?? null,
+    inbox_address: row.inbox?.address ?? null,
+    inbox_discarded: row.inbox?.discarded ?? null,
+    // Optimistic by design: Yoke computes this from the pointer alone, because
+    // the definitive check is a storage query per row. true can still 410.
+    content_available: row.content_available,
+    webhook_status: row.webhook_status,
+    content_path: row.content_path,
+  };
+}
+
 export const yokeCommon = {
   requestQueueDropdown: Property.Dropdown({
     displayName: 'Request Queue',
@@ -93,6 +159,58 @@ export const yokeCommon = {
           disabled: true,
           options: [],
           placeholder: 'Failed to load request queues. Check your Yoke connection.',
+        };
+      }
+    },
+  }),
+  inboxDropdown: Property.Dropdown({
+    displayName: 'Inbox',
+    description:
+      'Narrow the search to one agent email inbox. Leave empty to search every inbox in the account.',
+    auth: yokeAuth,
+    refreshers: [],
+    required: false,
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please connect your Yoke account first',
+        };
+      }
+      try {
+        const response = await yokeApiCall<YokeAgentEmailListResponse>({
+          accessToken: (auth as OAuth2PropertyValue).access_token,
+          method: HttpMethod.GET,
+          path: '/received_emails',
+          queryParams: { per_page: '100' },
+        });
+        // There is no inbox index endpoint in the read API - it is deliberately
+        // read-only over messages - so the inbox list is derived from the mail
+        // itself. An inbox that has never received anything therefore does not
+        // appear; the flow author can still type its token into a filter.
+        const inboxes = new Map<string, string>();
+        for (const row of response.body.received_emails) {
+          if (row.inbox?.token) {
+            inboxes.set(row.inbox.token, row.inbox.label ?? row.inbox.address ?? row.inbox.token);
+          }
+        }
+        if (inboxes.size === 0) {
+          return {
+            disabled: false,
+            options: [],
+            placeholder: 'No agent email inboxes have received mail yet.',
+          };
+        }
+        return {
+          disabled: false,
+          options: [...inboxes].map(([token, label]) => ({ label, value: token })),
+        };
+      } catch (e) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Failed to load inboxes. Check your Yoke connection.',
         };
       }
     },
@@ -233,6 +351,116 @@ export type YokeRequestResponse = {
     created_at: string;
     resolved_at: string | null;
   };
+};
+
+export type YokeReceivedEmailInbox = {
+  token: string;
+  label: string | null;
+  label_slug: string | null;
+  address: string;
+  routing_address: string;
+  discarded: boolean;
+};
+
+export type YokeReceivedEmailAttachment = {
+  position: number;
+  filename: string;
+  content_type: string;
+  // Null when the part's Content-Transfer-Encoding cannot be decoded. That
+  // position's download then answers 422 rather than serving the wrong bytes.
+  byte_size: number | null;
+  download_path: string;
+};
+
+export type YokeReceivedEmail = {
+  id: string;
+  message_id: string;
+  from: string | null;
+  subject: string | null;
+  received_at: string;
+  recorded_at: string;
+  has_attachments: boolean;
+  attachment_count: number;
+  content_available_until: string | null;
+  inbox: YokeReceivedEmailInbox;
+  text_body: string | null;
+  html_body: string | null;
+  headers: Record<string, string | string[] | null>;
+  attachments: YokeReceivedEmailAttachment[];
+  attachments_truncated: boolean;
+};
+
+export type YokeReceivedEmailRow = {
+  id: string;
+  message_id: string;
+  from: string | null;
+  subject: string | null;
+  received_at: string;
+  recorded_at: string;
+  has_attachments: boolean;
+  attachment_count: number;
+  content_available_until: string | null;
+  inbox: YokeReceivedEmailInbox;
+  content_available: boolean;
+  webhook_status: string;
+  content_path: string;
+};
+
+export type YokeReceivedEmailShowResponse = {
+  received_email: YokeReceivedEmail;
+};
+
+export type YokeReceivedEmailListResponse = {
+  received_emails: YokeReceivedEmailRow[];
+  pagination: {
+    page: number;
+    per_page: number;
+    total: number;
+    pages: number;
+  };
+};
+
+// The inbox dropdown reads the message index, so it shares that response type.
+export type YokeAgentEmailListResponse = YokeReceivedEmailListResponse;
+
+export type FlatYokeReceivedEmail = {
+  id: string;
+  message_id: string;
+  from: string | null;
+  subject: string | null;
+  received_at: string;
+  recorded_at: string;
+  has_attachments: boolean;
+  attachment_count: number;
+  content_available_until: string | null;
+  inbox_token: string | null;
+  inbox_label: string | null;
+  inbox_address: string | null;
+  inbox_discarded: boolean | null;
+  text_body: string | null;
+  html_body?: string | null;
+  headers: Record<string, string | string[] | null>;
+  attachments: YokeReceivedEmailAttachment[];
+  attachments_truncated: boolean;
+};
+
+export type FlatYokeReceivedEmailRow = {
+  id: string;
+  message_id: string;
+  from: string | null;
+  subject: string | null;
+  received_at: string;
+  recorded_at: string;
+  has_attachments: boolean;
+  attachment_count: number;
+  content_available_until: string | null;
+  inbox_token: string | null;
+  inbox_label: string | null;
+  inbox_address: string | null;
+  inbox_discarded: boolean | null;
+  content_available: boolean;
+  webhook_status: string;
+  content_path: string;
 };
 
 export type FlatYokeInstruction = {
