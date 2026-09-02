@@ -8324,6 +8324,18 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/skyvern-selfhosted": {
+      "name": "@attunesolutions/piece-skyvern-selfhosted",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/slack": {
       "name": "@activepieces/piece-slack",
       "version": "0.17.9",
@@ -9952,7 +9964,7 @@
     },
     "packages/pieces/community/yoke": {
       "name": "@attunesolutions/piece-yoke",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -12754,6 +12766,8 @@
     "@atproto/xrpc": ["@atproto/xrpc@0.7.7", "", { "dependencies": { "@atproto/lexicon": "^0.6.0", "zod": "^3.23.8" } }, "sha512-K1ZyO/BU8JNtXX5dmPp7b5UrkLMMqpsIa/Lrj5D3Su+j1Xwq1m6QJ2XJ1AgjEjkI1v4Muzm7klianLE6XGxtmA=="],
 
     "@attunesolutions/piece-echoback": ["@attunesolutions/piece-echoback@workspace:packages/pieces/community/echoback"],
+
+    "@attunesolutions/piece-skyvern-selfhosted": ["@attunesolutions/piece-skyvern-selfhosted@workspace:packages/pieces/community/skyvern-selfhosted"],
 
     "@attunesolutions/piece-yoke": ["@attunesolutions/piece-yoke@workspace:packages/pieces/community/yoke"],
 

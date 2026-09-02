@@ -1240,6 +1240,9 @@
       "@activepieces/piece-skyvern": [
         "packages/pieces/community/skyvern/src/index.ts"
       ],
+      "@attunesolutions/piece-skyvern-selfhosted": [
+        "packages/pieces/community/skyvern-selfhosted/src/index.ts"
+      ],
       "@activepieces/piece-slack": [
         "packages/pieces/community/slack/src/index.ts"
       ],
