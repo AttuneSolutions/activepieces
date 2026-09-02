@@ -1,6 +1,6 @@
 {
   "name": "@attunesolutions/piece-skyvern-selfhosted",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Activepieces piece for a self-hosted Skyvern instance — browser-automation agent tasks and workflows against your own API URL.",
   "license": "MIT",
   "homepage": "https://github.com/AttuneSolutions/activepieces/tree/main/packages/pieces/community/skyvern-selfhosted",

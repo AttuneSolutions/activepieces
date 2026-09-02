@@ -1,8 +1,12 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
 import { cancelRunAction } from './lib/actions/cancel-run';
+import { createBrowserProfileAction } from './lib/actions/create-browser-profile';
+import { createCredentialAction } from './lib/actions/create-credential';
 import { findWorkflowAction } from './lib/actions/find-workflow';
 import { getRunAction } from './lib/actions/get-run';
+import { loginTaskAction } from './lib/actions/login-task';
+import { pushTotpCodeAction } from './lib/actions/push-totp-code';
 import { runAgentTaskAction } from './lib/actions/run-agent-task';
 import { runWorkflowAction } from './lib/actions/run-workflow';
 import { skyvernAuth } from './lib/common/auth';
@@ -19,6 +23,10 @@ export const skyvernSelfHosted = createPiece({
 	actions: [
 		runAgentTaskAction,
 		runWorkflowAction,
+		loginTaskAction,
+		pushTotpCodeAction,
+		createCredentialAction,
+		createBrowserProfileAction,
 		cancelRunAction,
 		getRunAction,
 		findWorkflowAction,

@@ -2,7 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { skyvernAuth } from '../common/auth';
 import { skyvernApiCall } from '../common/client';
-import { workflowId, workflowParams } from '../common/props';
+import { browserProfileId, proxyLocation, webhookUrl } from '../common/props';
 
 export const runWorkflowAction = createAction({
 	auth: skyvernAuth,
@@ -10,62 +10,62 @@ export const runWorkflowAction = createAction({
 	displayName: 'Run Workflow',
 	description: 'Runs the workflow.',
 	audience: 'both',
-	aiMetadata: { description: 'Starts a run of an existing Skyvern workflow identified by its workflow ID, passing any workflow parameters. Use when an agent should execute a predefined multi-step automation rather than an ad-hoc prompt-driven task. Each call triggers a new asynchronous run (not idempotent); the response returns a run identifier you poll separately with Get Workflow/Task Run.', idempotent: false },
+	aiMetadata: {
+		description:
+			'Starts a run of an existing Skyvern workflow, passing its parameters as a JSON object. Use Find Workflow to turn a title into an Agent ID, and always pass the permanent `wpid_…` id rather than a versioned `w_…` one — editing a workflow mints a new `w_…` but keeps the `wpid_…`, so a pinned `w_…` quietly runs a stale version. Each call triggers a new asynchronous run (not idempotent); the response returns a run identifier you poll separately with Get Workflow/Task Run.',
+		idempotent: false,
+	},
 	props: {
-		workflowId: workflowId,
+		agentId: Property.ShortText({
+			displayName: 'Agent ID',
+			description:
+				'The workflow\'s permanent `wpid_…` id, as returned by Find Workflow. Do not use a versioned `w_…` id — it pins the run to a stale version.',
+			required: true,
+		}),
 		title: Property.ShortText({
 			displayName: 'Workflow Run Title',
 			required: false,
 			description: 'The title for this workflow run.',
 		}),
-		proxyLocation: Property.StaticDropdown({
-			displayName: 'Proxy Location',
+		parameters: Property.Json({
+			displayName: 'Parameters',
 			required: false,
-			options: {
-				disabled: false,
-				options: [
-					{ label: 'Residential', value: 'RESIDENTIAL' },
-					{ label: 'Spain', value: 'RESIDENTIAL_ES' },
-					{ label: 'Ireland', value: 'RESIDENTIAL_IE' },
-					{ label: 'United Kingdom', value: 'RESIDENTIAL_GB' },
-					{ label: 'India', value: 'RESIDENTIAL_IN' },
-					{ label: 'Japan', value: 'RESIDENTIAL_JP' },
-					{ label: 'France', value: 'RESIDENTIAL_FR' },
-					{ label: 'Germany', value: 'RESIDENTIAL_DE' },
-					{ label: 'New Zealand', value: 'RESIDENTIAL_NZ' },
-					{ label: 'South Africa', value: 'RESIDENTIAL_ZA' },
-					{ label: 'Argentina', value: 'RESIDENTIAL_AR' },
-					{ label: 'ISP Proxy', value: 'RESIDENTIAL_ISP' },
-					{ label: 'California (US)', value: 'US-CA' },
-					{ label: 'New York (US)', value: 'US-NY' },
-					{ label: 'Texas (US)', value: 'US-TX' },
-					{ label: 'Florida (US)', value: 'US-FL' },
-					{ label: 'Washington (US)', value: 'US-WA' },
-					{ label: 'No Proxy', value: 'NONE' },
-				],
-			},
+			description:
+				'The workflow\'s parameters as a JSON object, e.g. `{ "customer_email": "a@b.c" }`.',
 		}),
-		webhookUrl: Property.ShortText({
-			displayName: 'Webhook Callback URL',
+		browserProfileId,
+		proxyLocation,
+		webhookUrl,
+		runMetadata: Property.Json({
+			displayName: 'Run Metadata',
 			required: false,
+			description: 'Arbitrary JSON stored alongside the run for your own bookkeeping.',
 		}),
-		parameters: workflowParams,
 	},
 	async run(context) {
-		const { workflowId, webhookUrl, proxyLocation, parameters } = context.propsValue;
+		const {
+			agentId,
+			title,
+			parameters,
+			browserProfileId,
+			proxyLocation,
+			webhookUrl,
+			runMetadata,
+		} = context.propsValue;
 
-		const response = await skyvernApiCall({
+		return skyvernApiCall({
 			auth: context.auth.props,
 			method: HttpMethod.POST,
-			resourceUri: `/run/workflows`,
+			resourceUri: '/run/agents',
 			body: {
-				workflow_id: workflowId,
-				proxy_location: proxyLocation,
+				agent_id: agentId,
+				title,
 				parameters,
+				browser_profile_id: browserProfileId,
+				proxy_location: proxyLocation,
 				webhook_url: webhookUrl,
+				run_metadata: runMetadata,
 			},
 		});
-
-		return response;
 	},
 });
