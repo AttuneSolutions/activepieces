@@ -102,6 +102,8 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
   }),
 );
 
+let authoritativeProjectsGeneration = 0;
+
 export const projectCollectionUtils = {
   useCreateProject: (
     onSuccess: (project: ProjectWithLimits) => void,
@@ -110,7 +112,8 @@ export const projectCollectionUtils = {
     return useMutation({
       mutationFn: (request: CreatePlatformProjectRequest) =>
         api.post<ProjectWithLimits>('/v1/projects', request),
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
+        await projectCollection.preload();
         projectCollection.utils.writeInsert(data);
         onSuccess(data);
       },
@@ -131,7 +134,8 @@ export const projectCollectionUtils = {
         projectId: string;
         request: UpdateProjectPlatformRequest;
       }) => api.post<ProjectWithLimits>(`/v1/projects/${projectId}`, request),
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
+        await projectCollection.preload();
         projectCollection.utils.writeUpdate(data);
         onSuccess();
       },
@@ -151,7 +155,43 @@ export const projectCollectionUtils = {
   delete: (projectIds: string[]) => {
     projectCollection.delete(projectIds);
   },
-  refetchProjects: () => projectCollection.utils.refetch(),
+  refetchProjects: () => {
+    authoritativeProjectsGeneration += 1;
+    return projectCollection.utils.refetch();
+  },
+  markFlowActivity: ({
+    projectId,
+    lastFlowUpdated,
+  }: {
+    projectId: string;
+    lastFlowUpdated: string;
+  }) => {
+    const generation = authoritativeProjectsGeneration;
+    const write = () => {
+      if (generation !== authoritativeProjectsGeneration) {
+        return;
+      }
+      const project = projectCollection.get(projectId);
+      if (isNil(project)) {
+        return;
+      }
+      const current = project.analytics.lastFlowUpdated;
+      const isNewer =
+        isNil(current) ||
+        new Date(lastFlowUpdated).getTime() > new Date(current).getTime();
+      if (!isNewer) {
+        return;
+      }
+      projectCollection.utils.writeUpdate({
+        ...project,
+        analytics: {
+          ...project.analytics,
+          lastFlowUpdated,
+        },
+      });
+    };
+    requestAnimationFrame(() => requestAnimationFrame(write));
+  },
   setCurrentProject: (projectId: string, pathName?: string) => {
     authenticationSession.switchToProject(projectId);
     if (pathName) {

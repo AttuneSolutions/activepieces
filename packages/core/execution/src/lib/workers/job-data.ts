@@ -1,12 +1,15 @@
 
 import { z } from 'zod'
-import { isNil } from '@activepieces/core-utils'
+import { AIProviderName, isNil } from '@activepieces/core-utils'
 import { ResumeReason, StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
+import { CodeActionSchema, PieceActionSchema } from '../flows/actions/action'
 import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
-import { AppConnectionValue, PiecePackage } from '@activepieces/core-piece-types'
+import { AppConnectionType, AppConnectionValue, PiecePackage } from '@activepieces/core-piece-types'
+import { AgentTool } from '../agents/tools'
+import { AgentOutputField } from '../agents'
 
 export const LATEST_JOB_DATA_SCHEMA_VERSION = 10
 
@@ -53,16 +56,19 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
             return 'veryLow'
         case WorkerJobType.EXECUTE_WEBHOOK:
         case WorkerJobType.EVENT_DESTINATION:
+        case WorkerJobType.EXECUTE_PERSONALIZATION_RESEARCH:
             return 'medium'
         case WorkerJobType.EXECUTE_FLOW:
             return getExecuteFlowPriority(job.environment, job.workerHandlerId)
         case WorkerJobType.EXECUTE_PROPERTY:
         case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
         case WorkerJobType.EXECUTE_VALIDATION:
+        case WorkerJobType.EXECUTE_RESOLVE_CONNECTION_IDENTIFIER:
         case WorkerJobType.EXECUTE_TRIGGER_HOOK:
         case WorkerJobType.EXECUTE_TOKEN_REFRESH:
             return 'critical'
         case WorkerJobType.EXECUTE_AGENT_RUN:
+        case WorkerJobType.EXECUTE_ACTION:
             return 'high'
     }
 }
@@ -74,12 +80,15 @@ export enum WorkerJobType {
     EXECUTE_WEBHOOK = 'EXECUTE_WEBHOOK',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
     EXECUTE_VALIDATION = 'EXECUTE_VALIDATION',
+    EXECUTE_RESOLVE_CONNECTION_IDENTIFIER = 'EXECUTE_RESOLVE_CONNECTION_IDENTIFIER',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_EXTRACT_PIECE_INFORMATION = 'EXECUTE_EXTRACT_PIECE_INFORMATION',
     EVENT_DESTINATION = 'EVENT_DESTINATION',
     EXECUTE_AGENT_RUN = 'EXECUTE_AGENT_RUN',
     EXECUTE_TOKEN_REFRESH = 'EXECUTE_TOKEN_REFRESH',
+    EXECUTE_ACTION = 'EXECUTE_ACTION',
+    EXECUTE_PERSONALIZATION_RESEARCH = 'EXECUTE_PERSONALIZATION_RESEARCH',
 }
 
 export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
@@ -91,6 +100,9 @@ export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
     WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
     WorkerJobType.EXECUTE_AGENT_RUN,
     WorkerJobType.EXECUTE_TOKEN_REFRESH,
+    WorkerJobType.EXECUTE_RESOLVE_CONNECTION_IDENTIFIER,
+    WorkerJobType.EXECUTE_PERSONALIZATION_RESEARCH,
+    WorkerJobType.EXECUTE_ACTION,
 ] as const
 
 // Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
@@ -178,6 +190,19 @@ export const ExecuteValidateAuthJobData = z.object({
 })
 export type ExecuteValidateAuthJobData = z.infer<typeof ExecuteValidateAuthJobData>
 
+export const ExecuteResolveConnectionIdentifierJobData = z.object({
+    jobType: z.literal(WorkerJobType.EXECUTE_RESOLVE_CONNECTION_IDENTIFIER),
+    projectId: z.string().optional(),
+    platformId: z.string(),
+    piece: PiecePackage,
+    schemaVersion: z.number(),
+    connectionValue: z.custom<AppConnectionValue>(),
+    connectionType: z.enum(AppConnectionType),
+    requestId: z.string(),
+    webserverId: z.string(),
+})
+export type ExecuteResolveConnectionIdentifierJobData = z.infer<typeof ExecuteResolveConnectionIdentifierJobData>
+
 export const ExecuteTokenRefreshJobData = z.object({
     jobType: z.literal(WorkerJobType.EXECUTE_TOKEN_REFRESH),
     projectId: z.string().optional(),
@@ -200,6 +225,7 @@ export const ExecuteTriggerHookJobData = z.object({
     test: z.boolean(),
     hookType: z.nativeEnum(TriggerHookType),
     triggerPayload: TriggerPayload.optional(),
+    isRepublish: z.boolean().optional(),
     requestId: z.string(),
     webserverId: z.string(),
 })
@@ -233,23 +259,50 @@ export const ExecuteExtractPieceMetadataJobData = z.object({
 })
 export type ExecuteExtractPieceMetadataJobData = z.infer<typeof ExecuteExtractPieceMetadataJobData>
 
+export const ActionRunStep = z.discriminatedUnion('type', [PieceActionSchema, CodeActionSchema])
+export type ActionRunStep = z.infer<typeof ActionRunStep>
+
+export const ExecuteActionJobData = z.object({
+    jobType: z.literal(WorkerJobType.EXECUTE_ACTION),
+    projectId: z.string(),
+    platformId: z.string(),
+    schemaVersion: z.number(),
+    step: ActionRunStep,
+    piece: z.optional(PiecePackage),
+    expiresAt: z.number(),
+    requestId: z.string(),
+    webserverId: z.string(),
+})
+export type ExecuteActionJobData = z.infer<typeof ExecuteActionJobData>
+
 export const UserInteractionJobData = z.union([
     ExecuteValidateAuthJobData,
+    ExecuteResolveConnectionIdentifierJobData,
     ExecuteTokenRefreshJobData,
     ExecuteTriggerHookJobData,
     ExecutePropertyJobData,
     ExecuteExtractPieceMetadataJobData,
+    ExecuteActionJobData,
 ])
 export type UserInteractionJobData = z.infer<typeof UserInteractionJobData>
 
 export const UserInteractionJobDataWithoutWatchingInformation = z.union([
     ExecuteValidateAuthJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
+    ExecuteResolveConnectionIdentifierJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
     ExecuteTokenRefreshJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
     ExecuteTriggerHookJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
     ExecutePropertyJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
     ExecuteExtractPieceMetadataJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
+    ExecuteActionJobData.omit({ schemaVersion: true, requestId: true, webserverId: true }),
 ])
 export type UserInteractionJobDataWithoutWatchingInformation = z.infer<typeof UserInteractionJobDataWithoutWatchingInformation>
+
+export enum AgentRunSource {
+    CHAT = 'CHAT',
+    FLOW_STEP = 'FLOW_STEP',
+    AGENT = 'AGENT',
+    AGENT_BUILDER = 'AGENT_BUILDER',
+}
 
 export const AgentPromptOverride = z.object({
     system: z.string().optional(),
@@ -258,6 +311,15 @@ export const AgentPromptOverride = z.object({
     guides: z.record(z.string(), z.string()).optional(),
 })
 export type AgentPromptOverride = z.infer<typeof AgentPromptOverride>
+
+export const ResolvedAgentFlowTool = z.object({
+    toolName: z.string(),
+    flowId: z.string(),
+    description: z.string(),
+    inputSchema: z.record(z.string(), z.unknown()),
+    returnsResponse: z.boolean(),
+})
+export type ResolvedAgentFlowTool = z.infer<typeof ResolvedAgentFlowTool>
 
 export const ExecuteAgentRunJobData = z.object({
     schemaVersion: z.number(),
@@ -268,6 +330,16 @@ export const ExecuteAgentRunJobData = z.object({
     platformId: z.string(),
     userId: z.string(),
     userMessage: z.string(),
+    source: z.enum(AgentRunSource).optional(),
+    messageSource: z.enum(['onboarding']).optional(),
+    flowRunId: z.string().optional(),
+    waitpointId: z.string().optional(),
+    tools: z.array(AgentTool).optional(),
+    flowTools: z.array(ResolvedAgentFlowTool).optional(),
+    structuredOutput: z.array(AgentOutputField).optional(),
+    maxSteps: z.number().int().positive().optional(),
+    provider: z.enum(AIProviderName).optional(),
+    providerConfigId: z.string().optional(),
     modelName: z.string().nullable(),
     files: z.array(z.object({
         name: z.string(),
@@ -282,6 +354,22 @@ export const ExecuteAgentRunJobData = z.object({
     discoveryOnly: z.boolean().optional(),
 })
 export type ExecuteAgentRunJobData = z.infer<typeof ExecuteAgentRunJobData>
+
+export const ExecutePersonalizationResearchJobData = z.object({
+    schemaVersion: z.number(),
+    jobType: z.literal(WorkerJobType.EXECUTE_PERSONALIZATION_RESEARCH),
+    platformId: z.string(),
+    projectId: z.string().nullable(),
+    userId: z.string(),
+    scope: z.enum(['company', 'user']),
+    website: z.string().nullable(),
+    companyText: z.string().nullable(),
+    role: z.string().nullable(),
+    prefillOnly: z.boolean(),
+    researchToken: z.string().nullable(),
+})
+export type ExecutePersonalizationResearchJobData = z.infer<typeof ExecutePersonalizationResearchJobData>
+export type PersonalizationScope = ExecutePersonalizationResearchJobData['scope']
 
 export const EventDestinationJobData = z.object({
     schemaVersion: z.number(),
@@ -303,6 +391,7 @@ export const JobData = z.union([
     UserInteractionJobData,
     EventDestinationJobData,
     ExecuteAgentRunJobData,
+    ExecutePersonalizationResearchJobData,
 ])
 export type JobData = z.infer<typeof JobData>
 export type JobPayload = z.infer<typeof JobPayload>

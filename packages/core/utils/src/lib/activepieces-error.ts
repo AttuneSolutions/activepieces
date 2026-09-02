@@ -51,6 +51,7 @@ export type ApErrorParams =
     | ValidationErrorParams
     | InvitationOnlySignUpParams
     | UserIsInActiveErrorParams
+    | UserNotFoundOnPlatformErrorParams
     | DomainIsNotAllowedErrorParams
     | EmailAuthIsDisabledParams
     | ExistingAlertChannelErrorParams
@@ -68,6 +69,7 @@ export type ApErrorParams =
     | InvalidGitCredentialsParams
     | InvalidReleaseTypeParams
     | ProjectExternalIdAlreadyExistsParams
+    | FlowExternalIdAlreadyExistsParams
     | SandboxMemoryIssueParams
     | SandboxExecutionTimeoutParams
     | SandboxInternalErrorParams
@@ -112,6 +114,7 @@ export type SandboxMemoryIssueParams = BaseErrorParams<ErrorCode.SANDBOX_MEMORY_
 export type SandboxExecutionTimeoutParams = BaseErrorParams<ErrorCode.SANDBOX_EXECUTION_TIMEOUT, {
     standardOutput: string
     standardError: string
+    neverStarted?: boolean
 }>
 
 export type SandboxInternalErrorParams = BaseErrorParams<ErrorCode.SANDBOX_INTERNAL_ERROR, {
@@ -208,6 +211,13 @@ ErrorCode.EMAIL_IS_NOT_VERIFIED,
 
 export type UserIsInActiveErrorParams = BaseErrorParams<
 ErrorCode.USER_IS_INACTIVE,
+{
+    email: string
+}
+>
+
+export type UserNotFoundOnPlatformErrorParams = BaseErrorParams<
+ErrorCode.USER_NOT_FOUND_ON_PLATFORM,
 {
     email: string
 }
@@ -346,6 +356,8 @@ export type QuotaExceededParams = BaseErrorParams<
 ErrorCode.QUOTA_EXCEEDED,
 {
     metric: PlatformUsageMetric
+    usage?: number
+    limit?: number
 }
 >
 
@@ -420,6 +432,10 @@ export type InvalidReleaseTypeParams = BaseErrorParams<ErrorCode.INVALID_RELEASE
 }>
 
 export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS, {
+    externalId: string
+}>
+
+export type FlowExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.FLOW_EXTERNAL_ID_ALREADY_EXISTS, {
     externalId: string
 }>
 
@@ -520,6 +536,7 @@ export enum ErrorCode {
     EXISTING_USER = 'EXISTING_USER',
     EXISTING_ALERT_CHANNEL = 'EXISTING_ALERT_CHANNEL',
     PROJECT_EXTERNAL_ID_ALREADY_EXISTS = 'PROJECT_EXTERNAL_ID_ALREADY_EXISTS',
+    FLOW_EXTERNAL_ID_ALREADY_EXISTS = 'FLOW_EXTERNAL_ID_ALREADY_EXISTS',
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
     FLOW_OPERATION_IN_PROGRESS = 'FLOW_OPERATION_IN_PROGRESS',
     FLOW_RUN_RETRY_OUTSIDE_RETENTION = 'FLOW_RUN_RETRY_OUTSIDE_RETENTION',
@@ -548,6 +565,7 @@ export enum ErrorCode {
     TRIGGER_UPDATE_STATUS = 'TRIGGER_UPDATE_STATUS',
     TRIGGER_FAILED = 'TRIGGER_FAILED',
     USER_IS_INACTIVE = 'USER_IS_INACTIVE',
+    USER_NOT_FOUND_ON_PLATFORM = 'USER_NOT_FOUND_ON_PLATFORM',
     VALIDATION = 'VALIDATION',
     INVALID_LICENSE_KEY = 'INVALID_LICENSE_KEY',
     EMAIL_ALREADY_HAS_ACTIVATION_KEY = 'EMAIL_ALREADY_HAS_ACTIVATION_KEY',

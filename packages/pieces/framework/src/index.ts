@@ -55,6 +55,7 @@ export {
   // ai providers
   AIProviderModel,
   AIProviderWithoutSensitiveData,
+  ProjectAIProvider,
   AzureProviderConfig,
   BaseAIProviderAuthConfig,
   BedrockProviderAuthConfig,
@@ -62,6 +63,8 @@ export {
   CloudflareGatewayProviderConfig,
   GetProviderConfigResponse,
   OpenAICompatibleProviderConfig,
+  OpenAiCompatibleVendorConfig,
+  OPENAI_COMPATIBLE_VENDOR_BASE_URLS,
   getEffectiveProviderAndModel,
   splitCloudflareGatewayModelId,
   AI_PROVIDER_CAPABILITIES,
@@ -99,6 +102,8 @@ export {
   RAW_PAYLOAD_HEADER,
   PARENT_RUN_ID_HEADER,
   FAIL_PARENT_ON_FAILURE_HEADER,
+  ACTIVEPIECES_CHAT_TIERS,
+  DEFAULT_CHAT_TIER_ID,
 } from '@activepieces/core-piece-types';
 export type {
   McpAuthConfig,

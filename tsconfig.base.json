@@ -220,8 +220,8 @@
       "@activepieces/piece-calendly": [
         "packages/pieces/community/calendly/src/index.ts"
       ],
-      "@activepieces/piece-call-rounded": [
-        "packages/pieces/community/call-rounded/src/index.ts"
+      "@activepieces/piece-rounded-studio": [
+        "packages/pieces/community/rounded-studio/src/index.ts"
       ],
       "@activepieces/piece-camb-ai": [
         "packages/pieces/community/camb-ai/src/index.ts"
@@ -841,6 +841,9 @@
       "@activepieces/piece-microsoft-power-bi": [
         "packages/pieces/community/microsoft-power-bi/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-sql-server": [
+        "packages/pieces/community/microsoft-sql-server/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-teams": [
         "packages/pieces/community/microsoft-teams/src/index.ts"
       ],
@@ -1069,6 +1072,12 @@
       ],
       "@activepieces/piece-quickbooks": [
         "packages/pieces/community/quickbooks/src/index.ts"
+      ],
+      "@activepieces/piece-quickbooks-desktop-conductor": [
+        "packages/pieces/community/quickbooks-desktop-conductor/src/index.ts"
+      ],
+      "@activepieces/piece-quickbooks-sandbox": [
+        "packages/pieces/community/quickbooks-sandbox/src/index.ts"
       ],
       "@activepieces/piece-quickzu": [
         "packages/pieces/community/quickzu/src/index.ts"
@@ -1897,7 +1906,7 @@
       "@activepieces/piece-omnihr": [
         "packages/pieces/community/omnihr/src/index.ts"
       ],
-      "@activepieces/piece-clicdog": [
+      "@activepieces/piece-clicdata": [
         "packages/pieces/community/clicdata/src/index.ts"
       ],
       "@activepieces/piece-katana": [

@@ -1,4 +1,4 @@
-import { anthropic } from '@ai-sdk/anthropic'
+import { anthropic, createAnthropic } from '@ai-sdk/anthropic'
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
 import { createOpenAI, openai } from '@ai-sdk/openai'
 import { createGoogleGenerativeAI, google } from '@ai-sdk/google'
@@ -7,20 +7,22 @@ import { createAzure } from '@ai-sdk/azure'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { EmbeddingModel, ImageModel, LanguageModel } from 'ai'
 import { ProviderOptions } from '@ai-sdk/provider-utils'
-import { createLanguageModel } from '@activepieces/ai-providers'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AI_PROVIDER_CAPABILITIES, AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId } from '@activepieces/pieces-framework'
+import { AI_PROVIDER_CAPABILITIES, AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OPENAI_COMPATIBLE_VENDOR_BASE_URLS, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId, spreadIfDefined } from '@activepieces/pieces-framework'
 import { createAiGateway } from 'ai-gateway-provider';
 import { createAnthropic as createAnthropicGateway } from 'ai-gateway-provider/providers/anthropic';
 import { createGoogleGenerativeAI as createGoogleGateway } from 'ai-gateway-provider/providers/google';
 
-async function fetchProviderConfig(params: { provider: AIProviderName, engineToken: string, apiUrl: string }) {
+const AUTHORIZATION_HEADER = 'authorization'
+
+async function fetchProviderConfig(params: { provider: AIProviderName, engineToken: string, apiUrl: string, configId?: string }) {
     const { body } = await httpClient.sendRequest<GetProviderConfigResponse>({
         method: HttpMethod.GET,
         url: `${params.apiUrl}v1/ai-providers/${params.provider}/config`,
         headers: {
             Authorization: `Bearer ${params.engineToken}`,
         },
+        ...(params.configId === undefined ? {} : { queryParams: { configId: params.configId } }),
     })
     return body
 }
@@ -29,6 +31,7 @@ export function createAIModel(params: CreateAIModelParams<false>): Promise<Langu
 export function createAIModel(params: CreateAIModelParams<true>): Promise<ImageModel>;
 export async function createAIModel({
     provider,
+    configId,
     modelId,
     engineToken,
     projectId,
@@ -38,7 +41,7 @@ export async function createAIModel({
     openaiResponsesModel = false,
     isImage,
 }: CreateAIModelParams<boolean>): Promise<ImageModel | LanguageModel> {
-    const { config, auth, platformId } = await fetchProviderConfig({ provider, engineToken, apiUrl });
+    const { config, auth, platformId } = await fetchProviderConfig({ provider, engineToken, apiUrl, configId });
 
     if (isImage && !AI_PROVIDER_CAPABILITIES[provider].supportsImageGeneration) {
         throw new Error(`Provider ${provider} does not support image models`)
@@ -57,16 +60,7 @@ export async function createAIModel({
         }
     }
 
-    return createLanguageModel({
-        provider,
-        auth,
-        config,
-        modelId,
-        options: {
-            openaiResponsesModel,
-            extraHeaders: provider === AIProviderName.CUSTOM ? metadataHeaders : undefined,
-        },
-    })
+    return buildLanguageModel({ provider, auth, config, modelId, openaiResponsesModel, metadataHeaders })
 }
 
 export const anthropicSearchTool = anthropic.tools.webSearch_20250305;
@@ -114,6 +108,106 @@ export async function createEmbeddingModel({
         }
         default:
             throw new Error(`Provider ${provider} does not support embedding models`)
+    }
+}
+
+// Duplicated from @activepieces/ai-providers on purpose: that package is on ai@7, while this piece,
+// pieces-framework and the engine are on ai@6, and the engine runs generateText with the model this
+// builds — a v4 model cannot cross that boundary.
+// Unify with createLanguageModel once the ai package version is bumped across the repo.
+function buildLanguageModel({ provider, auth, config, modelId, openaiResponsesModel, metadataHeaders }: {
+    provider: AIProviderName
+    auth: unknown
+    config: unknown
+    modelId: string
+    openaiResponsesModel: boolean
+    metadataHeaders: Record<string, string>
+}): LanguageModel {
+    switch (provider) {
+        case AIProviderName.OPENAI: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            const client = createOpenAI({ apiKey })
+            return openaiResponsesModel ? client.responses(modelId) : client.chat(modelId)
+        }
+        case AIProviderName.ANTHROPIC: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return createAnthropic({ apiKey })(modelId)
+        }
+        case AIProviderName.GOOGLE: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return createGoogleGenerativeAI({ apiKey })(modelId)
+        }
+        case AIProviderName.AZURE: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            const { resourceName, apiVersion } = config as AzureProviderConfig
+            return createAzure({ resourceName, apiKey, apiVersion }).chat(modelId)
+        }
+        case AIProviderName.BEDROCK: {
+            const { accessKeyId, secretAccessKey } = auth as BedrockProviderAuthConfig
+            const { region } = config as BedrockProviderConfig
+            return createAmazonBedrock({ region, accessKeyId, secretAccessKey })(modelId)
+        }
+        case AIProviderName.CUSTOM: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            const { apiKeyHeader, baseUrl, defaultHeaders, apiStyle } = config as OpenAICompatibleProviderConfig
+            const headers = {
+                ...metadataHeaders,
+                ...(defaultHeaders ?? {}),
+                [apiKeyHeader]: apiKey,
+            }
+            if (apiStyle === 'responses') {
+                return createOpenAI({
+                    baseURL: baseUrl,
+                    apiKey,
+                    headers,
+                    ...spreadIfDefined('fetch', stripDefaultAuthorization(headers)),
+                }).responses(modelId)
+            }
+            return createOpenAICompatible({
+                name: 'openai-compatible',
+                baseURL: baseUrl,
+                headers,
+            }).chatModel(modelId)
+        }
+        case AIProviderName.MISTRAL: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return createOpenAICompatible({ name: 'mistral', baseURL: 'https://api.mistral.ai/v1', apiKey }).chatModel(modelId)
+        }
+        case AIProviderName.XAI:
+        case AIProviderName.DEEPSEEK:
+        case AIProviderName.ZAI:
+        case AIProviderName.QWEN:
+        case AIProviderName.MINIMAX:
+        case AIProviderName.MOONSHOT: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return createOpenAICompatible({
+                name: provider,
+                baseURL: OPENAI_COMPATIBLE_VENDOR_BASE_URLS[provider],
+                apiKey,
+            }).chatModel(modelId)
+        }
+        case AIProviderName.ACTIVEPIECES: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return createOpenRouter({ apiKey, headers: metadataHeaders }).chat(modelId) as LanguageModel
+        }
+        case AIProviderName.OPENROUTER: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return createOpenRouter({ apiKey }).chat(modelId) as LanguageModel
+        }
+        default:
+            throw new Error(`Provider ${provider} is not supported`)
+    }
+}
+
+function stripDefaultAuthorization(headers: Record<string, string>): typeof globalThis.fetch | undefined {
+    const carriesAuthorization = Object.keys(headers).some((key) => key.trim().toLowerCase() === AUTHORIZATION_HEADER)
+    if (carriesAuthorization) {
+        return undefined
+    }
+    return (input, init) => {
+        const sent = new Headers(init?.headers)
+        sent.delete(AUTHORIZATION_HEADER)
+        return fetch(input, { ...init, headers: sent })
     }
 }
 
@@ -269,6 +363,7 @@ const handleDefaultAiGatewayProvider = ({accountId, gatewayId, headers, isImage,
 
 type CreateAIModelParams<IsImage extends boolean = false> = {
     provider: AIProviderName;
+    configId?: string;
     modelId: string;
     engineToken: string;
     projectId: string;

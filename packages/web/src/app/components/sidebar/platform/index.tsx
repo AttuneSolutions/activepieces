@@ -1,10 +1,10 @@
-import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ComponentType, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
-import { BotIcon } from '@/components/icons/bot';
+import { ChartLineIcon } from '@/components/icons/chart-line';
 import {
   ChevronLeftIcon,
   ChevronLeftIconHandle,
@@ -16,10 +16,10 @@ import { KeyRoundIcon } from '@/components/icons/key-round';
 import { LayoutGridIcon } from '@/components/icons/layout-grid';
 import { LogInIcon } from '@/components/icons/log-in';
 import { MousePointerClickIcon } from '@/components/icons/mouse-pointer-click';
-import { PaletteIcon } from '@/components/icons/palette';
 import { PuzzleIcon } from '@/components/icons/puzzle';
 import { ReceiptIcon } from '@/components/icons/receipt';
 import { ServerIcon } from '@/components/icons/server';
+import { SettingsIcon } from '@/components/icons/settings';
 import { Settings2Icon } from '@/components/icons/settings2';
 import { SparklesIcon } from '@/components/icons/sparkles';
 import { SquareDashedBottomCodeIcon } from '@/components/icons/square-dashed-bottom-code';
@@ -59,25 +59,19 @@ export function PlatformSidebar() {
 
   const setupItems = [
     {
-      to: '/platform/setup/ai',
-      label: t('AI Providers'),
-      icon: BotIcon,
+      to: '/platform/setup/general',
+      label: t('General'),
+      icon: SettingsIcon,
     },
     {
-      to: '/platform/setup/ai-capabilities',
-      label: t('AI Capabilities'),
+      to: '/platform/setup/ai',
+      label: t('AI Center'),
       icon: SparklesIcon,
     },
     {
       to: '/platform/setup/mcp',
       label: t('MCP Server'),
       icon: McpSvg,
-    },
-    {
-      to: '/platform/setup/branding',
-      label: t('Branding'),
-      icon: PaletteIcon,
-      locked: !platform.plan.customAppearanceEnabled,
     },
     {
       to: '/platform/setup/connections',
@@ -99,8 +93,14 @@ export function PlatformSidebar() {
     },
     {
       to: '/platform/setup/billing',
-      label: t('Billing'),
+      label: t('Billing & subscription'),
       icon: ReceiptIcon,
+      locked: edition === ApEdition.COMMUNITY,
+    },
+    {
+      to: '/platform/setup/usage',
+      label: t('Usage'),
+      icon: ChartLineIcon,
       locked: edition === ApEdition.COMMUNITY,
     },
     {
@@ -127,7 +127,7 @@ export function PlatformSidebar() {
           to: '/platform/projects',
           label: t('Projects'),
           icon: LayoutGridIcon,
-          locked: platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE,
+          locked: platform.plan.billedTeamProjectsLimit === 0,
         },
         {
           to: '/platform/users',
@@ -254,7 +254,7 @@ export function PlatformSidebar() {
         </SidebarContent>
       </div>
 
-      <SidebarFooter>
+      <SidebarFooter className="pb-3">
         <SidebarUser />
       </SidebarFooter>
     </Sidebar>

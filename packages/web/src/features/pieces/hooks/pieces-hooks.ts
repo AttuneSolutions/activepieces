@@ -20,6 +20,7 @@ import {
 import {
   QueryClient,
   useMutation,
+  usePrefetchQuery,
   useQueries,
   useQuery,
 } from '@tanstack/react-query';
@@ -69,6 +70,7 @@ type UsePieceProps = {
   name: string;
   version?: string;
   enabled?: boolean;
+  projectId?: string;
 };
 
 type UseMultiplePiecesProps = {
@@ -81,6 +83,9 @@ type UsePiecesProps = {
   isTableQuery?: boolean;
   skipProjectFilter?: boolean;
 };
+type UsePrefetchPiecesProps = {
+  skipProjectFilter?: boolean;
+};
 type UsePiecesSearchProps = {
   searchQuery: string;
   enabled?: boolean;
@@ -89,12 +94,17 @@ type UsePiecesSearchProps = {
 };
 
 export const piecesHooks = {
-  usePiece: ({ name, version, enabled = true }: UsePieceProps) => {
+  usePiece: ({ name, version, enabled = true, projectId }: UsePieceProps) => {
     const { i18n } = useTranslation();
     const query = useQuery<PieceMetadataModel, Error>({
-      queryKey: ['piece', name, version, i18n.language],
+      queryKey: ['piece', name, version, i18n.language, projectId],
       queryFn: () =>
-        piecesApi.get({ name, version, locale: i18n.language as LocalesEnum }),
+        piecesApi.get({
+          name,
+          version,
+          locale: i18n.language as LocalesEnum,
+          projectId,
+        }),
       staleTime: Infinity,
       enabled,
       retry: (failureCount, error) => {
@@ -175,26 +185,14 @@ export const piecesHooks = {
     skipProjectFilter = false,
   }: UsePiecesProps) => {
     const { i18n } = useTranslation();
-    const projectId = skipProjectFilter
-      ? undefined
-      : authenticationSession.getProjectId()!;
     const query = useQuery<PieceMetadataModelSummary[], Error>({
-      queryKey: [
-        isTableQuery ? 'pieces-table' : 'pieces',
+      ...piecesQueryOptions({
         searchQuery,
         includeHidden,
+        isTableQuery,
         skipProjectFilter,
-        projectId,
-        i18n.language,
-      ],
-      queryFn: () =>
-        piecesApi.list({
-          projectId,
-          searchQuery,
-          includeHidden,
-          locale: i18n.language as LocalesEnum,
-        }),
-      staleTime: searchQuery ? 0 : Infinity,
+        locale: i18n.language as LocalesEnum,
+      }),
       meta: isTableQuery
         ? { showErrorDialog: true, loadSubsetOptions: {} }
         : undefined,
@@ -204,6 +202,19 @@ export const piecesHooks = {
       isLoading: query.isLoading,
       refetch: query.refetch,
     };
+  },
+  usePrefetchPieces: ({
+    skipProjectFilter = false,
+  }: UsePrefetchPiecesProps) => {
+    const { i18n } = useTranslation();
+    usePrefetchQuery(
+      piecesQueryOptions({
+        includeHidden: false,
+        isTableQuery: false,
+        skipProjectFilter,
+        locale: i18n.language as LocalesEnum,
+      }),
+    );
   },
   usePiecesSearch: (
     props: UsePiecesSearchProps,
@@ -572,3 +583,34 @@ function invalidatePieceCaches(queryClient: QueryClient): Promise<void[]> {
 }
 
 export const pieceCacheUtils = { invalidatePieceCaches };
+
+function piecesQueryOptions({
+  searchQuery,
+  includeHidden,
+  isTableQuery,
+  skipProjectFilter,
+  locale,
+}: {
+  searchQuery?: string;
+  includeHidden: boolean;
+  isTableQuery: boolean;
+  skipProjectFilter: boolean;
+  locale: LocalesEnum;
+}) {
+  const projectId = skipProjectFilter
+    ? undefined
+    : authenticationSession.getProjectId()!;
+  return {
+    queryKey: [
+      isTableQuery ? 'pieces-table' : 'pieces',
+      searchQuery,
+      includeHidden,
+      skipProjectFilter,
+      projectId,
+      locale,
+    ],
+    queryFn: () =>
+      piecesApi.list({ projectId, searchQuery, includeHidden, locale }),
+    staleTime: searchQuery ? 0 : Infinity,
+  };
+}

@@ -9,11 +9,20 @@ describe('AI_PROVIDER_CAPABILITIES', () => {
         }
     })
 
-    it('only Anthropic and Mistral reject image generation', () => {
+    it('only the text-only vendors reject image generation', () => {
         const noImage = Object.values(AIProviderName).filter(
             (provider) => !AI_PROVIDER_CAPABILITIES[provider].supportsImageGeneration,
         )
-        expect(noImage.sort()).toEqual([AIProviderName.ANTHROPIC, AIProviderName.MISTRAL].sort())
+        expect(noImage.sort()).toEqual([
+            AIProviderName.ANTHROPIC,
+            AIProviderName.MISTRAL,
+            AIProviderName.XAI,
+            AIProviderName.DEEPSEEK,
+            AIProviderName.ZAI,
+            AIProviderName.QWEN,
+            AIProviderName.MINIMAX,
+            AIProviderName.MOONSHOT,
+        ].sort())
     })
 
     it('marks embedding support iff a default embedding model exists', () => {
@@ -53,20 +62,20 @@ describe('getCuratedChatModels', () => {
     })
 })
 
-describe('isKnownChatModelId', () => {
+describe('isCuratedChatModelId', () => {
     it('accepts every tier id and every curated model id', () => {
         for (const tier of ACTIVEPIECES_CHAT_TIERS) {
-            expect(aiProviderUtils.isKnownChatModelId({ modelId: tier.id })).toBe(true)
+            expect(aiProviderUtils.isCuratedChatModelId({ modelId: tier.id })).toBe(true)
         }
         for (const curatedIds of Object.values(ALLOWED_CHAT_MODELS_BY_PROVIDER)) {
             for (const id of curatedIds) {
-                expect(aiProviderUtils.isKnownChatModelId({ modelId: id })).toBe(true)
+                expect(aiProviderUtils.isCuratedChatModelId({ modelId: id })).toBe(true)
             }
         }
     })
 
     it('rejects anything outside that vocabulary', () => {
-        expect(aiProviderUtils.isKnownChatModelId({ modelId: 'gpt-9' })).toBe(false)
-        expect(aiProviderUtils.isKnownChatModelId({ modelId: '' })).toBe(false)
+        expect(aiProviderUtils.isCuratedChatModelId({ modelId: 'gpt-9' })).toBe(false)
+        expect(aiProviderUtils.isCuratedChatModelId({ modelId: '' })).toBe(false)
     })
 })
